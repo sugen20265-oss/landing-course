@@ -58,12 +58,30 @@
   .btn {
     display: inline-block; padding: 16px 28px; border-radius: 10px;
     font-weight: 600; font-size: 17px; text-decoration: none;
-    transition: background .2s, color .2s;
+    position: relative; overflow: hidden; /* волна от клика не вылезает за кнопку */
+    transition: background .2s, color .2s, box-shadow .3s;
   }
-  .btn-main { background: var(--navy); color: #fff; }
-  .btn-main:hover { background: var(--h1); }
+  /* Свечение: синий ореол, как свет от гармоник логотипа. Волна: кольцо расходится от кнопки */
+  .btn-main {
+    --glow: 55, 138, 221;
+    background: var(--navy); color: #fff;
+    box-shadow: 0 8px 30px -2px rgba(var(--glow), .7);
+    animation: wave 3.2s ease-out 1.2s infinite;
+  }
+  .btn-main:hover { background: var(--h1); box-shadow: 0 10px 40px 2px rgba(var(--glow), .85); animation: none; }
+  @keyframes wave {
+    0%   { box-shadow: 0 8px 30px -2px rgba(var(--glow), .7), 0 0 0 0 rgba(var(--glow), .5); }
+    60%, 100% { box-shadow: 0 8px 30px -2px rgba(var(--glow), .7), 0 0 0 16px rgba(var(--glow), 0); }
+  }
   .btn-alt { color: var(--navy); box-shadow: inset 0 0 0 2px var(--h4); }
-  .btn-alt:hover { box-shadow: inset 0 0 0 2px var(--h2); }
+  .btn-alt:hover { box-shadow: inset 0 0 0 2px var(--h2), 0 6px 26px -4px rgba(55, 138, 221, .45); }
+  /* Волна от точки нажатия */
+  .ripple {
+    position: absolute; border-radius: 50%; pointer-events: none;
+    background: currentColor; opacity: .3; transform: scale(0);
+    animation: ripple .65s ease-out forwards;
+  }
+  @keyframes ripple { to { transform: scale(1); opacity: 0; } }
 
   /* Спектр: гармоники как в знаке логотипа, вырастают один раз при загрузке */
   .spectrum { display: flex; align-items: flex-end; gap: 10px; height: 380px; }
@@ -118,10 +136,10 @@
   .final .wrap { display: grid; grid-template-columns: 1.3fr 1fr; gap: 56px; align-items: center; }
   .final h2 { color: #fff; font-size: clamp(30px, 3.6vw, 42px); line-height: 1.15; }
   .final p { color: var(--h4); max-width: 30em; margin: 20px 0 32px; }
-  .final .btn-main { background: #fff; color: var(--navy); }
+  .final .btn-main { --glow: 181, 212, 244; background: #fff; color: var(--navy); }
   .final .btn-main:hover { background: var(--h4); }
   .final .btn-alt { color: #fff; box-shadow: inset 0 0 0 2px var(--h2); }
-  .final .btn-alt:hover { box-shadow: inset 0 0 0 2px #fff; }
+  .final .btn-alt:hover { box-shadow: inset 0 0 0 2px #fff, 0 6px 26px -4px rgba(181, 212, 244, .5); }
   .final .avatar { width: 100%; max-width: 360px; justify-self: end; border-radius: 28px; display: block; }
   .final .actions { padding-bottom: 0; }
   .final { padding-bottom: 96px; }
@@ -162,6 +180,8 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .spectrum span { animation: none; }
+    .btn-main { animation: none; }
+    .ripple { display: none; }
     html { scroll-behavior: auto; }
   }
 </style>
@@ -328,6 +348,21 @@
       box.appendChild(bar);
     }
   })();
+
+  // Волна от точки нажатия на кнопке
+  document.querySelectorAll('.btn').forEach(function (btn) {
+    btn.addEventListener('pointerdown', function (e) {
+      var r = btn.getBoundingClientRect();
+      var size = Math.max(r.width, r.height) * 2;
+      var wave = document.createElement('span');
+      wave.className = 'ripple';
+      wave.style.width = wave.style.height = size + 'px';
+      wave.style.left = (e.clientX - r.left - size / 2) + 'px';
+      wave.style.top = (e.clientY - r.top - size / 2) + 'px';
+      btn.appendChild(wave);
+      wave.addEventListener('animationend', function () { wave.remove(); });
+    });
+  });
 </script>
 </body>
 </html>
